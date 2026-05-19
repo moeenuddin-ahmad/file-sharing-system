@@ -39,11 +39,15 @@ export class UsersService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid password');
     }
-    const accessToken = await this.jwtService.generateToken({
+    const { accessToken, refreshToken } = await this.jwtService.generateToken({
       id: user.id,
       email: user.email,
     });
-    return { user, accessToken };
+    await this.databaseService.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+    return { user, accessToken, refreshToken };
   }
 
   findAll() {
@@ -68,7 +72,26 @@ export class UsersService {
     });
   }
 
-  remove(id: number) {
+  async remove(id: number) {
     return this.databaseService.user.delete({ where: { id } });
+  }
+
+  async refresh(refreshTokenDTO: string) {
+    const payload = await this.jwtService.verifyToken(refreshTokenDTO);
+    const user = await this.databaseService.user.findUnique({
+      where: { refreshToken: refreshTokenDTO },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const { accessToken, refreshToken } = await this.jwtService.generateToken({
+      id: user.id,
+      email: user.email,
+    });
+    await this.databaseService.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+    return { user, accessToken, refreshToken };
   }
 }

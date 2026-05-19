@@ -48,4 +48,9 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
   }
+
+  @Post('refresh')
+  refresh(@Body('refreshToken') refreshTokenDto: string) {
+    return this.usersService.refresh(refreshTokenDto);
+  }
 }

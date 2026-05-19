@@ -6,7 +6,10 @@ export class JwtServices {
   constructor(private readonly jwtService: JwtService) {}
 
   async generateToken(payload: any) {
-    return this.jwtService.sign(payload, { expiresIn: '1d' });
+    return {
+      accessToken: this.jwtService.sign(payload, { expiresIn: '1d' }),
+      refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
+    };
   }
 
   async verifyToken(token: string) {

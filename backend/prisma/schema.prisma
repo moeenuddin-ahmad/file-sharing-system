@@ -12,6 +12,7 @@ model User {
   name String
   email String @unique
   password String
+  refreshToken String? @unique
 
   filespacesMember FileSpaceMember[]
   
@@ -22,7 +23,7 @@ model User {
 model FileSpace {
   id Int @id @default(autoincrement())
   name String
-
+  
   members FileSpaceMember[]
   files File[]
 
