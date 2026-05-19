@@ -6,9 +6,21 @@ import { DatabaseService } from 'src/database/database.service';
 export class FileSpaceService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(data: Prisma.FileSpaceCreateInput) {
-    return this.databaseService.fileSpace.create({
-      data,
+  async create(userId: number, data: Prisma.FileSpaceCreateInput) {
+    return this.databaseService.$transaction(async (tx) => {
+      const fileSpace = await tx.fileSpace.create({
+        data,
+      });
+
+      await tx.fileSpaceMember.create({
+        data: {
+          fileSpaceId: fileSpace.id,
+          userId: userId,
+          role: 'OWNER',
+        },
+      });
+
+      return fileSpace;
     });
   }
 
