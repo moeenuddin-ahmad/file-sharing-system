@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { FileSpaceModule } from './file-space/file-space.module';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { FileSpaceModule } from './file-space/file-space.module';
     DatabaseModule,
     UsersModule,
     FileSpaceModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

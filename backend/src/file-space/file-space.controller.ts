@@ -20,8 +20,8 @@ export class FileSpaceController {
   constructor(private readonly fileSpaceService: FileSpaceService) {}
 
   @Post()
-  create(@Body() dto: FileSpaceDto, @Req() req: any) {
-    return this.fileSpaceService.create(dto, req.user.id);
+  create(@Body() dto: FileSpaceDto) {
+    return this.fileSpaceService.create(dto);
   }
 
   @Get()
