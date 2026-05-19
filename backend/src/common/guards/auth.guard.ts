@@ -23,6 +23,9 @@ export class AuthGuard implements CanActivate {
     }
     try {
       const payload = await this.jwtService.verifyToken(token);
+      if (!payload.id) {
+        throw new UnauthorizedException();
+      }
       const user = await this.databaseService.user.findUnique({
         where: { id: payload.id },
       });
