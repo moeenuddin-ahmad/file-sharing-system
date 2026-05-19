@@ -7,9 +7,8 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
+  ParseFilePipeBuilder,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileService } from './file.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -22,17 +21,16 @@ export class FileController {
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: 1024 * 1024 * 10,
-            message: 'File is too large! Max 10MB allowed.',
-          }),
-          new FileTypeValidator({
-            fileType: '.(png|jpeg|jpg|pdf|txt|docx)',
-          }),
-        ],
-      }),
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: '.(png|jpeg|jpg|pdf|txt|docx)',
+        })
+        .addMaxSizeValidator({
+          maxSize: 1024 * 1024 * 10,
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
     )
     file: Express.Multer.File,
     @Body('fileSpaceId') fileSpaceId: string,
