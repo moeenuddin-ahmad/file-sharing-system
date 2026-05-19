@@ -9,11 +9,15 @@ import {
   UploadedFile,
   ParseFilePipeBuilder,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { FileService } from './file.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { FileAccessGuard } from 'src/common/guards/file-access.guard';
 
 @Controller('file')
+@UseGuards(AuthGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
@@ -49,6 +53,7 @@ export class FileController {
   }
 
   @Delete(':id')
+  @UseGuards(FileAccessGuard)
   remove(@Param('id') id: string) {
     return this.fileService.remove(+id);
   }
