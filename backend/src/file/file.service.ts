@@ -36,7 +36,6 @@ export class FileService {
     await writeFile(uploadPath, file.buffer).catch((err) => {
       throw new InternalServerErrorException('Failed to write file to disk');
     });
-u
     // 5. Save metadata to Database
     try {
       const fileRecord = await this.databaseService.file.create({
