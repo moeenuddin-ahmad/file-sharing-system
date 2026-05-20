@@ -5,21 +5,13 @@ import { MailerService } from '@nestjs-modules/mailer';
 export class MailServices {
   constructor(private readonly mailerService: MailerService) {}
 
-  async sendMail(
-    to: string,
-    subject: string,
-    html: string,
-    template?: string,
-    context?: any,
-  ) {
+  async sendMail(to: string, subject: string, html: string) {
     try {
       const info = await this.mailerService.sendMail({
         from: process.env.EMAIL_FROM || '"Moeen Hasan" <mashruf125@gmail.com>',
         to,
         subject,
         html,
-        template,
-        context,
       });
 
       console.log('Email sent successfully to %s: %s', to, info.messageId);
