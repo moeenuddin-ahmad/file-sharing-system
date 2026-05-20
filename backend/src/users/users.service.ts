@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { BcryptServices } from 'src/common/services/bcrypt.utils';
 import { JwtServices } from 'src/common/services/jwt.utls';
+import { MailServices } from 'src/common/services/mail.utils';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
     private readonly databaseService: DatabaseService,
     private readonly bcryptService: BcryptServices,
     private readonly jwtService: JwtServices,
+    private readonly mailService: MailServices,
   ) {}
 
   async create(createUserDto: Prisma.UserCreateInput) {
@@ -74,6 +76,53 @@ export class UsersService {
 
   async remove(id: number) {
     return this.databaseService.user.delete({ where: { id } });
+  }
+
+  async forgetPassword(email: string) {
+    const user = await this.databaseService.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const resetToken = await this.jwtService.generateResetToken({
+      id: user.id,
+      email: user.email,
+    });
+
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+
+    const htmlContent = `
+      <h1>Reset Your Password</h1>
+      <p>Hello ${user.name},</p>
+      <p>Please click the link below to reset your password. This link will expire in 10 seconds:</p>
+      <a href="${resetLink}">Reset Password</a>
+    `;
+
+    await this.mailService.sendMail(
+      user.email,
+      'Reset Your Password',
+      htmlContent,
+    );
+
+    return { message: 'Reset link sent to your email', resetToken }; // Token returned for testing (10s)
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const payload = await this.jwtService.verifyToken(token);
+    if (!payload.email) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+
+    const hashedPassword = await this.bcryptService.hashPassword(newPassword);
+
+    await this.databaseService.user.update({
+      where: { email: payload.email },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password reset successfully' };
   }
 
   async refresh(refreshTokenDTO: string) {

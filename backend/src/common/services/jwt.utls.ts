@@ -12,6 +12,10 @@ export class JwtServices {
     };
   }
 
+  async generateResetToken(payload: any) {
+    return this.jwtService.sign(payload, { expiresIn: '10s' });
+  }
+
   async verifyToken(token: string) {
     return this.jwtService.verify(token);
   }

@@ -48,6 +48,19 @@ export class UsersController {
     return this.usersService.remove(+id);
   }
 
+  @Post('forget-password')
+  forgetPassword(@Body('email') email: string) {
+    return this.usersService.forgetPassword(email);
+  }
+
+  @Post('reset-password')
+  resetPassword(
+    @Body('token') token: string,
+    @Body('password') password: string,
+  ) {
+    return this.usersService.resetPassword(token, password);
+  }
+
   @Post('refresh')
   refresh(@Body('refreshToken') refreshTokenDto: string) {
     return this.usersService.refresh(refreshTokenDto);
