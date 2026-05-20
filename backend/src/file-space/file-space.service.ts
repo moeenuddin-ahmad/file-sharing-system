@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class FileSpaceService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   async create(userId: number, data: Prisma.FileSpaceCreateInput) {
     return this.databaseService.$transaction(async (tx) => {
@@ -80,13 +84,18 @@ export class FileSpaceService {
       return { message: 'You are already a member of this FileSpace' };
     }
 
-    return this.databaseService.fileSpaceMember.create({
+    const member = await this.databaseService.fileSpaceMember.create({
       data: {
         userId,
         fileSpaceId,
         role: 'MEMBER',
       },
     });
+
+    // 1. Join user to room via Gateway
+    this.eventsGateway.joinUserToFileSpace(userId, fileSpaceId);
+
+    return member;
   }
 
   async leave(userId: number, fileSpaceId: number) {
@@ -103,8 +112,17 @@ export class FileSpaceService {
       throw new Error('Owners cannot leave a FileSpace');
     }
 
-    return this.databaseService.fileSpaceMember.delete({
+    const deleted = await this.databaseService.fileSpaceMember.delete({
       where: { id: member.id },
     });
+
+    // 2. Leave user from room via Gateway
+    this.eventsGateway.leaveUserFromFileSpace(userId, fileSpaceId);
+
+    return deleted;
+  }
+
+  async getActiveUsers(fileSpaceId: number) {
+    return this.eventsGateway.getActiveUsersInFileSpace(fileSpaceId);
   }
 }

@@ -9,7 +9,7 @@ import { FileSpaceModule } from './file-space/file-space.module';
 import { FileModule } from './file/file.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailServices } from './common/services/mail.utils';
-import { EventsGateway } from './events/events.gateway';
+import { EventsModule } from './events/events.module';
 
 @Global()
 @Module({
@@ -37,9 +37,10 @@ import { EventsGateway } from './events/events.gateway';
     UsersModule,
     FileSpaceModule,
     FileModule,
+    EventsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailServices, EventsGateway],
+  providers: [AppService, MailServices],
   exports: [MailServices],
 })
 export class AppModule {}

@@ -55,4 +55,9 @@ export class FileSpaceController {
   leave(@Req() req: any, @Param('id') id: string) {
     return this.fileSpaceService.leave(req.user.id, +id);
   }
+
+  @Get(':id/active-users')
+  getActiveUsers(@Param('id') id: string) {
+    return this.fileSpaceService.getActiveUsers(+id);
+  }
 }

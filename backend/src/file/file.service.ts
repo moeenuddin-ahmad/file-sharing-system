@@ -6,10 +6,14 @@ import {
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { DatabaseService } from 'src/database/database.service';
 import { join } from 'path';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Injectable()
 export class FileService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   async upload(file: Express.Multer.File, fileSpaceId: number) {
     // 1. Verify that the FileSpace exists
@@ -49,6 +53,9 @@ export class FileService {
           fileSpaceId: fileSpaceId,
         },
       });
+
+      // Trigger frontend refresh
+      this.eventsGateway.informFileSpace(fileSpaceId);
 
       return {
         message: 'File uploaded successfully!',
@@ -93,6 +100,8 @@ export class FileService {
       console.error('Failed to delete file from disk during removal:', err);
     });
 
+    // Trigger frontend refresh
+    this.eventsGateway.informFileSpace(file.fileSpaceId);
     return { message: 'File removed successfully' };
   }
 }
