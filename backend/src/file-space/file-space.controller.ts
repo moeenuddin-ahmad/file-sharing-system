@@ -45,4 +45,14 @@ export class FileSpaceController {
   remove(@Param('id') id: string) {
     return this.fileSpaceService.remove(+id);
   }
+
+  @Post(':id/join')
+  join(@Req() req: any, @Param('id') id: string) {
+    return this.fileSpaceService.join(req.user.id, +id);
+  }
+
+  @Post(':id/leave')
+  leave(@Req() req: any, @Param('id') id: string) {
+    return this.fileSpaceService.leave(req.user.id, +id);
+  }
 }

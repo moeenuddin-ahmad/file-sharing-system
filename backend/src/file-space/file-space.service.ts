@@ -60,4 +60,51 @@ export class FileSpaceService {
       throw new NotFoundException(`FileSpace with ID ${id} not found`);
     }
   }
+
+  async join(userId: number, fileSpaceId: number) {
+    // Check if FileSpace exists
+    const fileSpace = await this.findOne(fileSpaceId);
+
+    if (!fileSpace) {
+      throw new NotFoundException(`FileSpace with ID ${fileSpaceId} not found`);
+    }
+
+    // Check if mapping already exists
+    const existingMember = await this.databaseService.fileSpaceMember.findFirst(
+      {
+        where: { userId, fileSpaceId },
+      },
+    );
+
+    if (existingMember) {
+      return { message: 'You are already a member of this FileSpace' };
+    }
+
+    return this.databaseService.fileSpaceMember.create({
+      data: {
+        userId,
+        fileSpaceId,
+        role: 'MEMBER',
+      },
+    });
+  }
+
+  async leave(userId: number, fileSpaceId: number) {
+    const member = await this.databaseService.fileSpaceMember.findFirst({
+      where: { userId, fileSpaceId },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Membership not found');
+    }
+
+    // Prevent the OWNER from leaving
+    if (member.role === 'OWNER') {
+      throw new Error('Owners cannot leave a FileSpace');
+    }
+
+    return this.databaseService.fileSpaceMember.delete({
+      where: { id: member.id },
+    });
+  }
 }
