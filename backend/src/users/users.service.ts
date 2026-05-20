@@ -78,8 +78,11 @@ export class UsersService {
 
   async refresh(refreshTokenDTO: string) {
     const payload = await this.jwtService.verifyToken(refreshTokenDTO);
+    if (!payload.id) {
+      throw new UnauthorizedException('Invalid token');
+    }
     const user = await this.databaseService.user.findUnique({
-      where: { refreshToken: refreshTokenDTO },
+      where: { id: payload.id },
     });
     if (!user) {
       throw new UnauthorizedException('User not found');
