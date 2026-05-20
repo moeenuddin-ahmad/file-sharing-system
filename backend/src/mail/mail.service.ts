@@ -9,8 +9,8 @@ export class MailService {
   async sendMail() {
     try {
       const info = await this.mailerService.sendMail({
-        from: '"Moeen Hasan" <mashruf125@gmail.com>',
-        to: 'rahim126444@gmail.com',
+        from: process.env.EMAIL_FROM || '"Moeen Hasan" <mashruf125@gmail.com>',
+        to: process.env.EMAIL_TO || 'rahim126444@gmail.com',
         subject: 'Hello',
         text: 'Hello world?',
         html: '<b>Hello world?</b>',
