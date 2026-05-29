@@ -30,7 +30,7 @@ export class FileController {
           fileType: '.(png|jpeg|jpg|pdf|txt|docx)',
         })
         .addMaxSizeValidator({
-          maxSize: 1024 * 1024 * 10,
+          maxSize: 1024 * 1024 * 10, // 10MB
         })
         .build({
           errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -43,11 +43,13 @@ export class FileController {
   }
 
   @Get()
+  @UseGuards(FileAccessGuard)
   findAll() {
     return this.fileService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(FileAccessGuard)
   findOne(@Param('id') id: string) {
     return this.fileService.findOne(+id);
   }

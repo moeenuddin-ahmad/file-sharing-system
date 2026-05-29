@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, role } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { EventsGateway } from 'src/events/events.gateway';
 
@@ -20,7 +20,7 @@ export class FileSpaceService {
         data: {
           fileSpaceId: fileSpace.id,
           userId: userId,
-          role: 'OWNER',
+          role: role.OWNER,
         },
       });
 
@@ -73,7 +73,7 @@ export class FileSpaceService {
       throw new NotFoundException(`FileSpace with ID ${fileSpaceId} not found`);
     }
 
-    // Check if mapping already exists
+    // Check if member already exists
     const existingMember = await this.databaseService.fileSpaceMember.findFirst(
       {
         where: { userId, fileSpaceId },
@@ -88,7 +88,7 @@ export class FileSpaceService {
       data: {
         userId,
         fileSpaceId,
-        role: 'MEMBER',
+        role: role.MEMBER,
       },
     });
 
@@ -108,7 +108,7 @@ export class FileSpaceService {
     }
 
     // Prevent the OWNER from leaving
-    if (member.role === 'OWNER') {
+    if (member.role === role.OWNER) {
       throw new Error('Owners cannot leave a FileSpace');
     }
 
