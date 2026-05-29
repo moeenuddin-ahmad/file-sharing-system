@@ -61,4 +61,9 @@ export class FileSpaceController {
   getActiveUsers(@Param('id') id: string) {
     return this.fileSpaceService.getActiveUsers(+id);
   }
+
+  @Get(':id/members')
+  getMembers(@Param('id') id: string) {
+    return this.fileSpaceService.getMembers(+id);
+  }
 }

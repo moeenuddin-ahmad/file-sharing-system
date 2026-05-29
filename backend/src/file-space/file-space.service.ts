@@ -122,6 +122,21 @@ export class FileSpaceService {
     return deleted;
   }
 
+  async getMembers(fileSpaceId: number) {
+    return this.databaseService.fileSpaceMember.findMany({
+      where: { fileSpaceId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
   async getActiveUsers(fileSpaceId: number) {
     return this.eventsGateway.getActiveUsersInFileSpace(fileSpaceId);
   }
