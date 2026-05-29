@@ -125,25 +125,56 @@ export class UsersService {
     return { message: 'Password reset successfully' };
   }
 
-  async refresh(refreshTokenDTO: string) {
-    const payload = await this.jwtService.verifyToken(refreshTokenDTO);
-    if (!payload.id) {
-      throw new UnauthorizedException('Invalid token');
+  async refresh(accessTokenDTO: string, refreshTokenDTO: string) {
+    try {
+      // First, verify the access token
+      const accessTokenPayload =
+        await this.jwtService.verifyToken(accessTokenDTO);
+
+      const user = await this.databaseService.user.findUnique({
+        where: { id: accessTokenPayload.id },
+      });
+
+      return {
+        message: 'Access token is still valid',
+        user,
+        accessToken: accessTokenDTO,
+        refreshToken: refreshTokenDTO,
+      };
+    } catch (error) {
+      // If access token is invalid or expired, proceed to check the refresh token
+      try {
+        const refreshTokenPayload =
+          await this.jwtService.verifyToken(refreshTokenDTO);
+
+        const user = await this.databaseService.user.findUnique({
+          where: { id: refreshTokenPayload.id },
+        });
+
+        if (!user) {
+          throw new UnauthorizedException('User not found');
+        }
+
+        // Security check: Match the stored refresh token to prevent reuse of old tokens
+        if (user.refreshToken !== refreshTokenDTO) {
+          throw new UnauthorizedException('Invalid refresh token');
+        }
+
+        const { accessToken, refreshToken } =
+          await this.jwtService.generateToken({
+            id: user.id,
+            email: user.email,
+          });
+
+        await this.databaseService.user.update({
+          where: { id: user.id },
+          data: { refreshToken },
+        });
+
+        return { user, accessToken, refreshToken };
+      } catch (refreshError) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
     }
-    const user = await this.databaseService.user.findUnique({
-      where: { id: payload.id },
-    });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    const { accessToken, refreshToken } = await this.jwtService.generateToken({
-      id: user.id,
-      email: user.email,
-    });
-    await this.databaseService.user.update({
-      where: { id: user.id },
-      data: { refreshToken },
-    });
-    return { user, accessToken, refreshToken };
   }
 }

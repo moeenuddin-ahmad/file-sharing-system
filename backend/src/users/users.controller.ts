@@ -62,7 +62,10 @@ export class UsersController {
   }
 
   @Post('refresh')
-  refresh(@Body('refreshToken') refreshTokenDto: string) {
-    return this.usersService.refresh(refreshTokenDto);
+  refresh(
+    @Body('accessToken') accessTokenDto: string,
+    @Body('refreshToken') refreshTokenDto: string,
+  ) {
+    return this.usersService.refresh(accessTokenDto, refreshTokenDto);
   }
 }
