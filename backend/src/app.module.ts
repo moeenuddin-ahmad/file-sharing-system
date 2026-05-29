@@ -10,11 +10,17 @@ import { FileModule } from './file/file.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailServices } from './common/services/mail.utils';
 import { EventsModule } from './events/events.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {

@@ -74,18 +74,23 @@ export class FileService {
     }
   }
 
-  findAll() {
-    return this.databaseService.file.findMany();
-  }
-
-  findOne(id: number) {
-    return this.databaseService.file.findUnique({
-      where: { id },
+  async findAll(fileSpaceId: number) {
+    const files = await this.databaseService.file.findMany({
+      where: { fileSpaceId },
     });
+    console.log(files);
+    return files.map((file) => ({
+      ...file,
+      size: file.size.toString(),
+      url: `http://localhost:3000/uploads/${file.storedName}`,
+    }));
   }
 
   async remove(id: number) {
-    const file = await this.findOne(id);
+    const file = await this.databaseService.file.findUnique({
+      where: { id },
+    });
+
     if (!file) {
       throw new NotFoundException(`File with ID ${id} not found`);
     }

@@ -10,6 +10,7 @@ import {
   ParseFilePipeBuilder,
   HttpStatus,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { FileService } from './file.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -42,16 +43,9 @@ export class FileController {
     return this.fileService.upload(file, +fileSpaceId);
   }
 
-  @Get()
-  @UseGuards(FileAccessGuard)
-  findAll() {
-    return this.fileService.findAll();
-  }
-
-  @Get(':id')
-  @UseGuards(FileAccessGuard)
-  findOne(@Param('id') id: string) {
-    return this.fileService.findOne(+id);
+  @Get(':fileSpaceId')
+  findAll(@Param('fileSpaceId') fileSpaceId: string) {
+    return this.fileService.findAll(+fileSpaceId);
   }
 
   @Delete(':id')
