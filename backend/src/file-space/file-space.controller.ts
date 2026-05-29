@@ -13,6 +13,7 @@ import { FileSpaceService } from './file-space.service';
 import { FileSpaceDto, UpdateFileSpaceDto } from './dto/file-space.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OwnerGuard } from 'src/common/guards/owner.guard';
+import type { RequestWithUser } from 'src/common/interfaces/request.interface';
 
 @Controller('file-space')
 @UseGuards(AuthGuard)
@@ -20,7 +21,7 @@ export class FileSpaceController {
   constructor(private readonly fileSpaceService: FileSpaceService) {}
 
   @Post()
-  create(@Req() req: any, @Body() dto: FileSpaceDto) {
+  create(@Req() req: RequestWithUser, @Body() dto: FileSpaceDto) {
     return this.fileSpaceService.create(req.user.id, dto);
   }
 
@@ -47,12 +48,12 @@ export class FileSpaceController {
   }
 
   @Post(':id/join')
-  join(@Req() req: any, @Param('id') id: string) {
+  join(@Req() req: RequestWithUser, @Param('id') id: string) {
     return this.fileSpaceService.join(req.user.id, +id);
   }
 
   @Post(':id/leave')
-  leave(@Req() req: any, @Param('id') id: string) {
+  leave(@Req() req: RequestWithUser, @Param('id') id: string) {
     return this.fileSpaceService.leave(req.user.id, +id);
   }
 

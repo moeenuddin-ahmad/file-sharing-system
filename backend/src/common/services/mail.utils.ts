@@ -8,13 +8,11 @@ export class MailServices {
   async sendMail(to: string, subject: string, html: string) {
     try {
       const info = await this.mailerService.sendMail({
-        from: process.env.EMAIL_FROM || '"Moeen Hasan" <mashruf125@gmail.com>',
+        from: process.env.EMAIL_FROM,
         to,
         subject,
         html,
       });
-
-      console.log('Email sent successfully to %s: %s', to, info.messageId);
       return info;
     } catch (err) {
       console.error('Error while sending mail to %s:', to, err);
