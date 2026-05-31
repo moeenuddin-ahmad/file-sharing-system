@@ -28,19 +28,7 @@ export class FileController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   upload(
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: '.(png|jpeg|jpg|pdf|txt|docx)',
-        })
-        .addMaxSizeValidator({
-          maxSize: 1024 * 1024 * 10, // 10MB
-        })
-        .build({
-          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-        }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
     @Body('fileSpaceId') fileSpaceId: string,
   ) {
     return this.fileService.upload(file, +fileSpaceId);

@@ -19,52 +19,70 @@ import KeyvRedis from '@keyv/redis';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { join } from 'path';
+import configuration from './config/configuration';
+import { ConfigService } from '@nestjs/config';
 
 @Global()
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    // config module configuration
+    ConfigModule.forRoot({
+      load: [configuration],
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    // jwt module configuration
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        global: true,
+        secret: config.get('jwt.secret'),
+        signOptions: { expiresIn: config.get('jwt.expiresIn') },
+      }),
+    }),
+    // cache module configuration
     CacheModule.registerAsync({
       isGlobal: true,
-      useFactory: async () => {
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
         return {
           ttl: 60000, // 1 minute global TTL
-          stores: [new KeyvRedis(process.env.REDIS_URL)],
+          stores: [new KeyvRedis(config.get('redis.url'))],
         };
       },
     }),
+    // serve static files from the uploads directory
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
     // mail service configuration
     MailerModule.forRootAsync({
-      useFactory: () => ({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
         transport: {
-          host: process.env.EMAIL_HOST,
-          port: Number(process.env.EMAIL_PORT),
-          secure: process.env.EMAIL_SECURE === 'true',
+          host: config.get('email.host'),
+          port: config.get('email.port'),
+          secure: config.get('email.secure'),
           auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
+            user: config.get('email.user'),
+            pass: config.get('email.pass'),
           },
         },
       }),
     }),
-    JwtModule.register({
-      global: true,
-      secret: '123',
-      signOptions: { expiresIn: '60s' },
-    }),
     // multer configuration
-    MulterModule.register({
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const timestamp = Date.now();
-          const filename = `${timestamp}-${file.originalname}`;
-          cb(null, filename);
-        },
+    MulterModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        storage: diskStorage({
+          destination: './uploads',
+          filename: (req, file, cb) => {
+            const timestamp = Date.now();
+            const filename = `${timestamp}-${file.originalname}`;
+            cb(null, filename);
+          },
+        }),
       }),
     }),
     DatabaseModule,

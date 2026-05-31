@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
   Inject,
 } from '@nestjs/common';
 import { unlink } from 'fs/promises';
@@ -21,7 +22,30 @@ export class FileService {
   ) {}
 
   async upload(file: Express.Multer.File, fileSpaceId: number) {
-    // 1. Verify that the FileSpace exists
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // 1. Validate File Type & Size
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/png',
+      'application/pdf',
+      'text/plain',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!allowedMimeTypes.includes(file.mimetype) || file.size > maxSize) {
+      if (file.path) await unlink(file.path).catch(() => {});
+      throw new BadRequestException(
+        file.size > maxSize
+          ? 'File is too large! Max 10MB'
+          : 'Invalid file type! Only JPG, PNG, PDF, TXT and DOCX are allowed.',
+      );
+    }
+
+    // 2. Verify that the FileSpace exists
     const fileSpace = await this.databaseService.fileSpace.findUnique({
       where: { id: fileSpaceId },
     });
