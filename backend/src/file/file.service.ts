@@ -2,17 +2,21 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  Inject,
 } from '@nestjs/common';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { DatabaseService } from 'src/database/database.service';
 import { join } from 'path';
 import { EventsGateway } from 'src/events/events.gateway';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class FileService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventsGateway: EventsGateway,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async upload(file: Express.Multer.File, fileSpaceId: number) {
@@ -53,6 +57,9 @@ export class FileService {
           fileSpaceId: fileSpaceId,
         },
       });
+
+      // Invalidate Cache for this space
+      await this.cacheManager.del(`/file/${fileSpaceId}`);
 
       // Trigger frontend refresh
       this.eventsGateway.informFileSpace(fileSpaceId);
@@ -104,6 +111,9 @@ export class FileService {
     await unlink(file.path).catch((err) => {
       console.error('Failed to delete file from disk during removal:', err);
     });
+
+    // Invalidate Cache for this space
+    await this.cacheManager.del(`/file/${file.fileSpaceId}`);
 
     // Trigger frontend refresh
     this.eventsGateway.informFileSpace(file.fileSpaceId);

@@ -8,15 +8,18 @@ import {
   Delete,
   UseGuards,
   Req,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileSpaceService } from './file-space.service';
 import { FileSpaceDto, UpdateFileSpaceDto } from './dto/file-space.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OwnerGuard } from 'src/common/guards/owner.guard';
 import type { RequestWithUser } from 'src/common/interfaces/request.interface';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('file-space')
 @UseGuards(AuthGuard)
+@UseInterceptors(CacheInterceptor)
 export class FileSpaceController {
   constructor(private readonly fileSpaceService: FileSpaceService) {}
 

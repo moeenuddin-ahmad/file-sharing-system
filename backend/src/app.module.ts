@@ -11,12 +11,23 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { MailServices } from './common/services/mail.utils';
 import { EventsModule } from './events/events.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 import { join } from 'path';
 
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: async () => {
+        return {
+          ttl: 60000, // 1 minute global TTL
+          stores: [new KeyvRedis(process.env.REDIS_URL)],
+        };
+      },
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
@@ -39,6 +50,7 @@ import { join } from 'path';
       secret: '123',
       signOptions: { expiresIn: '60s' },
     }),
+
     DatabaseModule,
     UsersModule,
     FileSpaceModule,

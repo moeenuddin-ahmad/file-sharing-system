@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, LoginUserDto, UpdateUserDto } from './dto/users.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('users')
+@UseInterceptors(CacheInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

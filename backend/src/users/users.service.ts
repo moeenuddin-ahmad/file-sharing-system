@@ -2,12 +2,15 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { BcryptServices } from 'src/common/services/bcrypt.utils';
 import { JwtServices } from 'src/common/services/jwt.utls';
 import { MailServices } from 'src/common/services/mail.utils';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class UsersService {
@@ -16,13 +19,21 @@ export class UsersService {
     private readonly bcryptService: BcryptServices,
     private readonly jwtService: JwtServices,
     private readonly mailService: MailServices,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(createUserDto: Prisma.UserCreateInput) {
     createUserDto.password = await this.bcryptService.hashPassword(
       createUserDto.password,
     );
-    return this.databaseService.user.create({ data: createUserDto });
+    const user = await this.databaseService.user.create({
+      data: createUserDto,
+    });
+
+    // Invalidate users list cache
+    await this.cacheManager.del('/users');
+
+    return user;
   }
 
   async login(
@@ -68,14 +79,26 @@ export class UsersService {
         updateUserDto.password,
       );
     }
-    return this.databaseService.user.update({
+    const updated = await this.databaseService.user.update({
       where: { id },
       data: updateUserDto,
     });
+
+    // Invalidate caches
+    await this.cacheManager.del('/users');
+    await this.cacheManager.del(`/users/${id}`);
+
+    return updated;
   }
 
   async remove(id: number) {
-    return this.databaseService.user.delete({ where: { id } });
+    const deleted = await this.databaseService.user.delete({ where: { id } });
+
+    // Invalidate caches
+    await this.cacheManager.del('/users');
+    await this.cacheManager.del(`/users/${id}`);
+
+    return deleted;
   }
 
   async forgetPassword(email: string) {

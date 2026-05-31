@@ -16,9 +16,11 @@ import { FileService } from './file.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { FileAccessGuard } from 'src/common/guards/file-access.guard';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('file')
 @UseGuards(AuthGuard)
+@UseInterceptors(CacheInterceptor)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 

@@ -1,31 +1,39 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, role } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { EventsGateway } from 'src/events/events.gateway';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class FileSpaceService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventsGateway: EventsGateway,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(userId: number, data: Prisma.FileSpaceCreateInput) {
-    return this.databaseService.$transaction(async (tx) => {
-      const fileSpace = await tx.fileSpace.create({
+    const fileSpace = await this.databaseService.$transaction(async (tx) => {
+      const fs = await tx.fileSpace.create({
         data,
       });
 
       await tx.fileSpaceMember.create({
         data: {
-          fileSpaceId: fileSpace.id,
+          fileSpaceId: fs.id,
           userId: userId,
           role: role.OWNER,
         },
       });
 
-      return fileSpace;
+      return fs;
     });
+
+    // Invalidate list cache
+    await this.cacheManager.del('/file-space');
+
+    return fileSpace;
   }
 
   async findAll() {
@@ -46,10 +54,16 @@ export class FileSpaceService {
 
   async update(id: number, data: Prisma.FileSpaceUpdateInput) {
     try {
-      return await this.databaseService.fileSpace.update({
+      const updated = await this.databaseService.fileSpace.update({
         where: { id },
         data,
       });
+
+      // Invalidate caches
+      await this.cacheManager.del('/file-space');
+      await this.cacheManager.del(`/file-space/${id}`);
+
+      return updated;
     } catch (error) {
       throw new NotFoundException(`FileSpace with ID ${id} not found`);
     }
@@ -57,9 +71,17 @@ export class FileSpaceService {
 
   async remove(id: number) {
     try {
-      return await this.databaseService.fileSpace.delete({
+      const deleted = await this.databaseService.fileSpace.delete({
         where: { id },
       });
+
+      // Invalidate caches
+      await this.cacheManager.del('/file-space');
+      await this.cacheManager.del(`/file-space/${id}`);
+      await this.cacheManager.del(`/file-space/${id}/members`);
+      await this.cacheManager.del(`/file-space/${id}/active-users`);
+
+      return deleted;
     } catch (error) {
       throw new NotFoundException(`FileSpace with ID ${id} not found`);
     }
@@ -93,6 +115,10 @@ export class FileSpaceService {
       },
     });
 
+    // Invalidate caches
+    await this.cacheManager.del(`/file-space/${fileSpaceId}/members`);
+    await this.cacheManager.del(`/file-space/${fileSpaceId}/active-users`);
+
     // 1. Join user to room via Gateway
     this.eventsGateway.joinUserToFileSpace(userId, fileSpaceId);
 
@@ -116,6 +142,10 @@ export class FileSpaceService {
     const deleted = await this.databaseService.fileSpaceMember.delete({
       where: { id: member.id },
     });
+
+    // Invalidate caches
+    await this.cacheManager.del(`/file-space/${fileSpaceId}/members`);
+    await this.cacheManager.del(`/file-space/${fileSpaceId}/active-users`);
 
     // 2. Leave user from room via Gateway
     this.eventsGateway.leaveUserFromFileSpace(userId, fileSpaceId);
@@ -156,4 +186,3 @@ export class FileSpaceService {
     });
   }
 }
-
