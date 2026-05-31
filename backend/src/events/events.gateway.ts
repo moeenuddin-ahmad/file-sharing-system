@@ -88,19 +88,4 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   informFileSpace(fileSpaceId: number) {
     this.server.to(`space_${fileSpaceId}`).emit('update-file');
   }
-
-  @SubscribeMessage('ping')
-  handlePing(@MessageBody() payload: any): string {
-    console.log('Ping received:', payload, this.onlineUsers);
-    return 'pong';
-  }
-
-  @SubscribeMessage('sendMessage')
-  handleSendMessage(
-    @MessageBody() payload: { roomName: string; message: string },
-    @ConnectedSocket() client: Socket,
-  ): string {
-    this.server.to(payload.roomName).emit('receiveMessage', payload.message);
-    return 'Message sent successfully';
-  }
 }

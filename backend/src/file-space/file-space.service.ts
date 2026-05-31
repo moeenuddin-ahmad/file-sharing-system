@@ -138,6 +138,20 @@ export class FileSpaceService {
   }
 
   async getActiveUsers(fileSpaceId: number) {
-    return this.eventsGateway.getActiveUsersInFileSpace(fileSpaceId);
+    const userIds = this.eventsGateway.getActiveUsersInFileSpace(fileSpaceId);
+
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    return this.databaseService.user.findMany({
+      where: {
+        id: { in: userIds },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
   }
 }

@@ -106,7 +106,7 @@ export class UsersService {
       htmlContent,
     );
 
-    return { message: 'Reset link sent to your email', resetToken }; // Token returned for testing (10s)
+    return { message: 'Reset link sent to your email', resetToken };
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -142,39 +142,35 @@ export class UsersService {
         refreshToken: refreshTokenDTO,
       };
     } catch (error) {
-      // If access token is invalid or expired, proceed to check the refresh token
-      try {
-        const refreshTokenPayload =
-          await this.jwtService.verifyToken(refreshTokenDTO);
+      const refreshTokenPayload =
+        await this.jwtService.verifyToken(refreshTokenDTO);
 
-        const user = await this.databaseService.user.findUnique({
-          where: { id: refreshTokenPayload.id },
-        });
+      const user = await this.databaseService.user.findUnique({
+        where: { id: refreshTokenPayload.id },
+      });
 
-        if (!user) {
-          throw new UnauthorizedException('User not found');
-        }
-
-        // Security check: Match the stored refresh token to prevent reuse of old tokens
-        if (user.refreshToken !== refreshTokenDTO) {
-          throw new UnauthorizedException('Invalid refresh token');
-        }
-
-        const { accessToken, refreshToken } =
-          await this.jwtService.generateToken({
-            id: user.id,
-            email: user.email,
-          });
-
-        await this.databaseService.user.update({
-          where: { id: user.id },
-          data: { refreshToken },
-        });
-
-        return { user, accessToken, refreshToken };
-      } catch (refreshError) {
-        throw new UnauthorizedException('Invalid or expired refresh token');
+      if (!user) {
+        throw new UnauthorizedException('User not found');
       }
+
+      // Security check: Match the stored refresh token to prevent reuse of old tokens
+      if (user.refreshToken !== refreshTokenDTO) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const { accessToken, refreshToken } = await this.jwtService.generateToken(
+        {
+          id: user.id,
+          email: user.email,
+        },
+      );
+
+      await this.databaseService.user.update({
+        where: { id: user.id },
+        data: { refreshToken },
+      });
+
+      return { user, accessToken, refreshToken };
     }
   }
 }
