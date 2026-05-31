@@ -2,15 +2,13 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-  Inject,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { BcryptServices } from 'src/common/services/bcrypt.utils';
 import { JwtServices } from 'src/common/services/jwt.utls';
 import { MailServices } from 'src/common/services/mail.utils';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
+import { CacheUtilsService } from 'src/common/services/cache.utils';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +17,7 @@ export class UsersService {
     private readonly bcryptService: BcryptServices,
     private readonly jwtService: JwtServices,
     private readonly mailService: MailServices,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly cacheUtils: CacheUtilsService,
   ) {}
 
   async create(createUserDto: Prisma.UserCreateInput) {
@@ -31,7 +29,7 @@ export class UsersService {
     });
 
     // Invalidate users list cache
-    await this.cacheManager.del('/users');
+    await this.cacheUtils.invalidate('users');
 
     return user;
   }
@@ -85,8 +83,7 @@ export class UsersService {
     });
 
     // Invalidate caches
-    await this.cacheManager.del('/users');
-    await this.cacheManager.del(`/users/${id}`);
+    await this.cacheUtils.invalidate('users', id);
 
     return updated;
   }
@@ -95,8 +92,7 @@ export class UsersService {
     const deleted = await this.databaseService.user.delete({ where: { id } });
 
     // Invalidate caches
-    await this.cacheManager.del('/users');
-    await this.cacheManager.del(`/users/${id}`);
+    await this.cacheUtils.invalidate('users', id);
 
     return deleted;
   }

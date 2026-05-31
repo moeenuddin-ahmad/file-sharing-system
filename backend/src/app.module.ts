@@ -1,4 +1,7 @@
 import { Module, Global } from '@nestjs/common';
+import { CacheUtilsService } from './common/services/cache.utils';
+import { JwtServices } from './common/services/jwt.utls';
+import { BcryptServices } from './common/services/bcrypt.utils';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -57,7 +60,13 @@ import { join } from 'path';
     EventsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailServices],
-  exports: [MailServices],
+  providers: [
+    AppService,
+    MailServices,
+    CacheUtilsService,
+    JwtServices,
+    BcryptServices,
+  ],
+  exports: [MailServices, CacheUtilsService, JwtServices, BcryptServices],
 })
 export class AppModule {}
