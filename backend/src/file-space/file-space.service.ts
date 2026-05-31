@@ -4,6 +4,8 @@ import { DatabaseService } from 'src/database/database.service';
 import { EventsGateway } from 'src/events/events.gateway';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { FiltersDto } from 'src/common/dto/filters.dto';
+import { paginate } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class FileSpaceService {
@@ -36,8 +38,8 @@ export class FileSpaceService {
     return fileSpace;
   }
 
-  async findAll() {
-    return this.databaseService.fileSpace.findMany();
+  async findAll(query: FiltersDto) {
+    return paginate(this.databaseService.fileSpace, query, ['name']);
   }
 
   async findOne(id: number) {

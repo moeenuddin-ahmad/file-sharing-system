@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { FileAccessGuard } from 'src/common/guards/file-access.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { FiltersDto } from 'src/common/dto/filters.dto';
 
 @Controller('file')
 @UseGuards(AuthGuard)
@@ -46,8 +47,11 @@ export class FileController {
   }
 
   @Get(':fileSpaceId')
-  findAll(@Param('fileSpaceId') fileSpaceId: string) {
-    return this.fileService.findAll(+fileSpaceId);
+  findAll(
+    @Param('fileSpaceId') fileSpaceId: string,
+    @Query() query: FiltersDto,
+  ) {
+    return this.fileService.findAll(+fileSpaceId, query);
   }
 
   @Delete(':id')

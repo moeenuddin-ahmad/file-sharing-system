@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { FileSpaceService } from './file-space.service';
 import { FileSpaceDto, UpdateFileSpaceDto } from './dto/file-space.dto';
@@ -16,6 +17,7 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OwnerGuard } from 'src/common/guards/owner.guard';
 import type { RequestWithUser } from 'src/common/interfaces/request.interface';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { FiltersDto } from 'src/common/dto/filters.dto';
 
 @Controller('file-space')
 @UseGuards(AuthGuard)
@@ -29,8 +31,8 @@ export class FileSpaceController {
   }
 
   @Get()
-  findAll() {
-    return this.fileSpaceService.findAll();
+  findAll(@Query() query: FiltersDto) {
+    return this.fileSpaceService.findAll(query);
   }
 
   @Get(':id')

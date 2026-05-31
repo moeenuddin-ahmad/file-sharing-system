@@ -8,11 +8,13 @@ import {
   Delete,
   UseGuards,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, LoginUserDto, UpdateUserDto } from './dto/users.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { FiltersDto } from 'src/common/dto/filters.dto';
 
 @Controller('users')
 @UseInterceptors(CacheInterceptor)
@@ -30,8 +32,8 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: FiltersDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

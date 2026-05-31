@@ -9,6 +9,9 @@ import { BcryptServices } from 'src/common/services/bcrypt.utils';
 import { JwtServices } from 'src/common/services/jwt.utls';
 import { MailServices } from 'src/common/services/mail.utils';
 import { CacheUtilsService } from 'src/common/services/cache.utils';
+import { FiltersDto } from 'src/common/dto/filters.dto';
+
+import { paginate } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class UsersService {
@@ -61,8 +64,8 @@ export class UsersService {
     return { user, accessToken, refreshToken };
   }
 
-  findAll() {
-    return this.databaseService.user.findMany();
+  async findAll(query: FiltersDto) {
+    return paginate(this.databaseService.user, query, ['name', 'email']);
   }
 
   async findOne(id: number) {

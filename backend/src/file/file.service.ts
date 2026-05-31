@@ -10,6 +10,8 @@ import { join } from 'path';
 import { EventsGateway } from 'src/events/events.gateway';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { FiltersDto } from 'src/common/dto/filters.dto';
+import { paginate } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class FileService {
@@ -81,16 +83,13 @@ export class FileService {
     }
   }
 
-  async findAll(fileSpaceId: number) {
-    const files = await this.databaseService.file.findMany({
-      where: { fileSpaceId },
-    });
-    console.log(files);
-    return files.map((file) => ({
-      ...file,
-      size: file.size.toString(),
-      url: `http://localhost:3000/uploads/${file.storedName}`,
-    }));
+  async findAll(fileSpaceId: number, query: FiltersDto) {
+    return paginate(
+      this.databaseService.file,
+      query,
+      ['name', 'originalName'],
+      { fileSpaceId },
+    );
   }
 
   async remove(id: number) {
