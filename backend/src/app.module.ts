@@ -50,7 +50,6 @@ import { join } from 'path';
       secret: '123',
       signOptions: { expiresIn: '60s' },
     }),
-
     DatabaseModule,
     UsersModule,
     FileSpaceModule,
