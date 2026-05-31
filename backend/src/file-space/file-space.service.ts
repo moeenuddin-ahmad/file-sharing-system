@@ -81,6 +81,7 @@ export class FileSpaceService {
     );
 
     if (existingMember) {
+      this.eventsGateway.joinUserToFileSpace(userId, fileSpaceId);
       return { message: 'You are already a member of this FileSpace' };
     }
 
@@ -155,3 +156,4 @@ export class FileSpaceService {
     });
   }
 }
+

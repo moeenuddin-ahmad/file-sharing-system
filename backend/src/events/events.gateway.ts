@@ -1,11 +1,8 @@
 import {
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  ConnectedSocket,
 } from '@nestjs/websockets';
 
 import { Server, Socket } from 'socket.io';
@@ -63,14 +60,20 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   joinUserToFileSpace(userId: number, fileSpaceId: number) {
     const client = this.onlineUsers.get(userId);
     if (client) {
-      client.join(`space_${fileSpaceId}`);
+      const roomName = `space_${fileSpaceId}`;
+      client.join(roomName);
+      // active users list needs refreshing
+      this.server.to(roomName).emit('update-active-users');
     }
   }
 
   leaveUserFromFileSpace(userId: number, fileSpaceId: number) {
     const client = this.onlineUsers.get(userId);
     if (client) {
-      client.leave(`space_${fileSpaceId}`);
+      const roomName = `space_${fileSpaceId}`;
+      client.leave(roomName);
+      // active users list needs refreshing
+      this.server.to(roomName).emit('update-active-users');
     }
   }
 
@@ -82,10 +85,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         ids.push(userId);
       }
     }
+    console.log({ ids });
     return ids;
   }
 
   informFileSpace(fileSpaceId: number) {
-    this.server.to(`space_${fileSpaceId}`).emit('update-file');
+    const roomName = `space_${fileSpaceId}`;
+    this.server.to(roomName).emit('update-file');
   }
 }
