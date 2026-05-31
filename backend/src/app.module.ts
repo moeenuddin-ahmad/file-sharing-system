@@ -16,6 +16,8 @@ import { EventsModule } from './events/events.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
+import { MulterModule } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { join } from 'path';
 
 @Global()
@@ -35,6 +37,7 @@ import { join } from 'path';
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
+    // mail service configuration
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
@@ -53,6 +56,17 @@ import { join } from 'path';
       secret: '123',
       signOptions: { expiresIn: '60s' },
     }),
+    // multer configuration
+    MulterModule.register({
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const timestamp = Date.now();
+          const filename = `${timestamp}-${file.originalname}`;
+          cb(null, filename);
+        },
+      }),
+    }),
     DatabaseModule,
     UsersModule,
     FileSpaceModule,
@@ -67,6 +81,12 @@ import { join } from 'path';
     JwtServices,
     BcryptServices,
   ],
-  exports: [MailServices, CacheUtilsService, JwtServices, BcryptServices],
+  exports: [
+    MailServices,
+    CacheUtilsService,
+    JwtServices,
+    BcryptServices,
+    MulterModule,
+  ],
 })
 export class AppModule {}

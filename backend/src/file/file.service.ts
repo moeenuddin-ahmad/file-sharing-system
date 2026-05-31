@@ -4,9 +4,8 @@ import {
   InternalServerErrorException,
   Inject,
 } from '@nestjs/common';
-import { writeFile, mkdir, unlink } from 'fs/promises';
+import { unlink } from 'fs/promises';
 import { DatabaseService } from 'src/database/database.service';
-import { join } from 'path';
 import { EventsGateway } from 'src/events/events.gateway';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -28,32 +27,19 @@ export class FileService {
     });
 
     if (!fileSpace) {
+      // Cleanup the uploaded file since the space doesn't exist
+      if (file.path) await unlink(file.path).catch(() => {});
       throw new NotFoundException(`FileSpace with ID ${fileSpaceId} not found`);
     }
 
-    const uploadDir = './uploads';
-
-    // 2. Ensure the upload directory exists
-    await mkdir(uploadDir, { recursive: true });
-
-    // 3. Define names and path
-    const timestamp = Date.now();
-    const storedName = `${timestamp}-${file.originalname}`;
-    const uploadPath = join(uploadDir, storedName);
-
-    // 4. Save file to disk
-
-    await writeFile(uploadPath, file.buffer).catch((err) => {
-      throw new InternalServerErrorException('Failed to write file to disk');
-    });
-    // 5. Save metadata to Database
+    // 2. Save metadata to Database
     try {
       const fileRecord = await this.databaseService.file.create({
         data: {
           name: file.originalname,
           originalName: file.originalname,
-          storedName: storedName,
-          path: uploadPath,
+          storedName: file.filename,
+          path: file.path,
           mimeType: file.mimetype,
           size: BigInt(file.size),
           fileSpaceId: fileSpaceId,
@@ -74,9 +60,8 @@ export class FileService {
         },
       };
     } catch (error) {
-      await unlink(uploadPath).catch((err) => {
-        console.error('Failed to cleanup file after DB error:', err);
-      });
+      // Cleanup on DB error
+      if (file.path) await unlink(file.path).catch(() => {});
       throw new InternalServerErrorException(
         'Failed to save file metadata to database',
       );
