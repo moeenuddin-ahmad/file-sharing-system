@@ -29,7 +29,8 @@ import { ConfigService } from '@nestjs/config';
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath:
+        process.env.RUNNING_IN_DOCKER === 'true' ? '.env.prod' : '.env.local',
     }),
     // jwt module configuration
     JwtModule.registerAsync({
